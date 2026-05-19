@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const HostelApp());
-}
-
 class HostelApp extends StatelessWidget {
   const HostelApp({super.key});
 
