@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hostel_issue_resolution/widgets/add__edit.dart';
 
 class HostelApp extends StatelessWidget {
   const HostelApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: ComplaintScreen(),
-    );
+    return const MaterialApp(home: ComplaintScreen());
   }
 }
 
@@ -44,200 +43,43 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     ),
   ];
 
-  // ADD COMPLAINT
-  void addComplaint() {
-    TextEditingController titleController = TextEditingController();
-    TextEditingController descriptionController =
-        TextEditingController();
-
-    String selectedStatus = "Pending";
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text("Add Complaint"),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleController,
-                      decoration: const InputDecoration(
-                        labelText: "Title",
-                      ),
-                    ),
-
-                    TextField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: "Description",
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    DropdownButtonFormField<String>(
-                      value: selectedStatus,
-                      decoration: const InputDecoration(
-                        labelText: "Status",
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: "Pending",
-                          child: Text("Pending"),
-                        ),
-                        DropdownMenuItem(
-                          value: "In Progress",
-                          child: Text("In Progress"),
-                        ),
-                        DropdownMenuItem(
-                          value: "Solved",
-                          child: Text("Solved"),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedStatus = value!;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Cancel"),
-                ),
-
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      complaints.add(
-                        Complaint(
-                          title: titleController.text,
-                          description: descriptionController.text,
-                          status: selectedStatus,
-                        ),
-                      );
-                    });
-
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Add"),
-                ),
-              ],
-            );
-          },
-        );
-      },
+  
+  void addComplaint() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddComplaintScreen()),
     );
+
+    if (result != null) {
+      setState(() {
+        complaints.add(
+          Complaint(
+            title: result["title"],
+            description: result["description"],
+            status: result["status"],
+          ),
+        );
+      });
+    }
   }
 
-  void editComplaint(int index) {
-    TextEditingController titleController =
-        TextEditingController(text: complaints[index].title,);
-
-    TextEditingController descriptionController =
-        TextEditingController(
-      text: complaints[index].description,
+  void editComplaint(int index) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddComplaintScreen(complaint: complaints[index]),
+      ),
     );
 
-    String selectedStatus = complaints[index].status;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text("Edit Complaint"),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleController,
-                      decoration: const InputDecoration(
-                        labelText: "Title",
-                      ),
-                    ),
-
-                    TextField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: "Description",
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        labelText: "Status",
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: "Pending",
-                          child: Text("Pending"),
-                        ),
-                        DropdownMenuItem(
-                          value: "In Progress",
-                          child: Text("In Progress"),
-                        ),
-                        DropdownMenuItem(
-                          value: "Solved",
-                          child: Text("Solved"),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedStatus = value!;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Cancel"),
-                ),
-
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      complaints[index].title =
-                          titleController.text;
-
-                      complaints[index].description =
-                          descriptionController.text;
-
-                      complaints[index].status =
-                          selectedStatus;
-                    });
-
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Update"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+    if (result != null) {
+      setState(() {
+        complaints[index].title = result["title"];
+        complaints[index].description = result["description"];
+        complaints[index].status = result["status"];
+      });
+    }
   }
 
- 
   void deleteComplaint(int index) {
     setState(() {
       complaints.removeAt(index);
@@ -289,8 +131,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
               ),
 
               subtitle: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(data.description),
 
@@ -303,11 +144,9 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: getStatusColor(data.status),
-                      borderRadius:
-                          BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-
                       "Status: ${data.status}",
                       style: const TextStyle(
                         color: Colors.white,
@@ -322,22 +161,14 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.edit,
-                      color: Color.fromARGB(
-                          255, 56, 55, 54),
-                    ),
+                    icon: const Icon(Icons.edit, color: Colors.black),
                     onPressed: () {
                       editComplaint(index);
                     },
                   ),
 
                   IconButton(
-                    icon: const Icon(
-                      Icons.delete,
-                      color: Color.fromARGB(
-                          255, 48, 47, 47),
-                    ),
+                    icon: const Icon(Icons.delete, color: Colors.black),
                     onPressed: () {
                       deleteComplaint(index);
                     },
@@ -351,3 +182,5 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     );
   }
 }
+
+// ADD / EDIT SCREEN
