@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// Make sure this path exactly matches your file structure!
 import 'package:flutter_hostel_issue_resolution/widgets/add__edit.dart';  
 
 class HostelApp extends StatelessWidget {
@@ -32,24 +33,29 @@ class ComplaintScreen extends StatefulWidget {
 }
 
 class _ComplaintScreenState extends State<ComplaintScreen> {
+  // Track active filter. Default is "All"
+  String currentFilter = "All";
 
-  void deleteComplaint(int index) {
+  void deleteComplaint(Complaint complaint) {
     setState(() {
-      widget.complaintList.removeAt(index);
+      widget.complaintList.remove(complaint);
     });
   }
 
+  // Fallback styling helper with normalized string checks
   Color getStatusColor(String status) {
-    if (status == "Pending") {
+    final normalized = status.trim().toLowerCase();
+    if (normalized == "pending") {
       return Colors.orange;
-    } else if (status == "In Progress") {
+    } else if (normalized == "in progress") {
       return Colors.blue;
     } else {
-      return Colors.green;
+      return Colors.green; // Default fallback for 'Solved' or completed
     }
   }
 
-  void navigateToAddEditScreen({Complaint? complaint, int? index}) async {
+  void navigateToAddEditScreen({Complaint? complaint}) async {
+    // Await the map data returning from your form screen
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -59,20 +65,23 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
       ),
     );
 
-    if (result != null) {
+    // Safeguard check to ensure data actually came back
+    if (result != null && result is Map) {
       setState(() {
         if (complaint == null) {
+          // Creating a new complaint safely extracting map string values
           widget.complaintList.add(
             Complaint(
-              title: result["title"],
-              description: result["description"],
-              status: result["status"],
+              title: result["title"] ?? "No Title",
+              description: result["description"] ?? "",
+              status: result["status"] ?? "Pending",
             ),
           );
         } else {
-         widget.complaintList[index!].title = result["title"];
-          widget.complaintList[index].description = result["description"];
-          widget.complaintList[index].status = result["status"];
+          // Modifying existing complaint object values directly
+          complaint.title = result["title"] ?? complaint.title;
+          complaint.description = result["description"] ?? complaint.description;
+          complaint.status = result["status"] ?? complaint.status;
         }
       });
     }
@@ -80,82 +89,128 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Normalizing strings ensures filters work even if case sizes vary (e.g. "Pending" vs "pending")
+    final filteredList = widget.complaintList.where((complaint) {
+      if (currentFilter == "All") return true;
+      return complaint.status.trim().toLowerCase() == currentFilter.trim().toLowerCase();
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Hostel Complaints"),
         backgroundColor: Colors.blue,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          navigateToAddEditScreen(); // Updated call
-        },
+        onPressed: () => navigateToAddEditScreen(),
         child: const Icon(Icons.add),
       ),
-      body: ListView.builder(
-        itemCount: widget.complaintList.length,
-        itemBuilder: (context, index) {
-          final data = widget.complaintList[index];
-
-          return Card(
-            color: const Color.fromARGB(255, 194, 105, 134),
-            margin: const EdgeInsets.all(10),
-            elevation: 10,
-            child: ListTile(
-              isThreeLine: true,
-              title: Text(
-                data.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(data.description),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: getStatusColor(data.status),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "Status: ${data.status}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          // Filter Chips Horizontal Bar
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            color: Colors.grey[100],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: ["All", "Pending", "In Progress", "Solved"].map((filterOpt) {
+                  final isSelected = currentFilter == filterOpt;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                    child: ChoiceChip(
+                      label: Text(filterOpt),
+                      selected: isSelected,
+                      selectedColor: Colors.blue.withOpacity(0.25),
+                      checkmarkColor: Colors.blue,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.blue[800] : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
+                      onSelected: (bool selected) {
+                        setState(() {
+                          currentFilter = filterOpt;
+                        });
+                      },
                     ),
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      navigateToAddEditScreen( // Updated call
-                        complaint: widget.complaintList[index],
-                        index: index,
+            ),
+          ),
+          
+          // Render the List dynamically
+          Expanded(
+            child: filteredList.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No complaints here!",
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: filteredList.length,
+                    itemBuilder: (context, index) {
+                      final data = filteredList[index];
+
+                      return Card(
+                        color: const Color.fromARGB(255, 194, 105, 134),
+                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        elevation: 4,
+                        child: ListTile(
+                          isThreeLine: true,
+                          title: Text(
+                            data.title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                data.description,
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: getStatusColor(data.status),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  data.status,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.white),
+                                onPressed: () => navigateToAddEditScreen(complaint: data),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.white70),
+                                onPressed: () => deleteComplaint(data),
+                              ),
+                            ],
+                          ),
+                        ),
                       );
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      deleteComplaint(index);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
