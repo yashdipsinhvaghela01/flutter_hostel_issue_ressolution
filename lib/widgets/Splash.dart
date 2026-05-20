@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hostel_issue_resolution/widgets/fragment_holder.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -8,6 +9,19 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-navigate to FragmentHolder after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FragmentHolder()),
+      );
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Container(
