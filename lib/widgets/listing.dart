@@ -33,7 +33,6 @@ class ComplaintScreen extends StatefulWidget {
 }
 
 class _ComplaintScreenState extends State<ComplaintScreen> {
-  // Track active filter. Default is "All"
   String currentFilter = "All";
 
   void deleteComplaint(Complaint complaint) {
@@ -42,7 +41,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     });
   }
 
-  // Fallback styling helper with normalized string checks
   Color getStatusColor(String status) {
     final normalized = status.trim().toLowerCase();
     if (normalized == "pending") {
@@ -50,12 +48,11 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     } else if (normalized == "in progress") {
       return Colors.blue;
     } else {
-      return Colors.green; // Default fallback for 'Solved' or completed
+      return Colors.green; 
     }
   }
 
   void navigateToAddEditScreen({Complaint? complaint}) async {
-    // Await the map data returning from your form screen
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -65,11 +62,9 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
       ),
     );
 
-    // Safeguard check to ensure data actually came back
     if (result != null && result is Map) {
       setState(() {
         if (complaint == null) {
-          // Creating a new complaint safely extracting map string values
           widget.complaintList.add(
             Complaint(
               title: result["title"] ?? "No Title",
@@ -78,7 +73,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
             ),
           );
         } else {
-          // Modifying existing complaint object values directly
           complaint.title = result["title"] ?? complaint.title;
           complaint.description = result["description"] ?? complaint.description;
           complaint.status = result["status"] ?? complaint.status;
@@ -89,7 +83,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Normalizing strings ensures filters work even if case sizes vary (e.g. "Pending" vs "pending")
     final filteredList = widget.complaintList.where((complaint) {
       if (currentFilter == "All") return true;
       return complaint.status.trim().toLowerCase() == currentFilter.trim().toLowerCase();
@@ -106,10 +99,9 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
       ),
       body: Column(
         children: [
-          // Filter Chips Horizontal Bar
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-            color: Colors.grey[100],
+            color: Colors.white24,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -121,7 +113,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                       label: Text(filterOpt),
                       selected: isSelected,
                       selectedColor: Colors.blue.withOpacity(0.25),
-                      checkmarkColor: Colors.blue,
+                      checkmarkColor: const Color.fromARGB(255, 243, 33, 33),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.blue[800] : Colors.black87,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -138,7 +130,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
             ),
           ),
           
-          // Render the List dynamically
           Expanded(
             child: filteredList.isEmpty
                 ? const Center(
@@ -153,7 +144,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                       final data = filteredList[index];
 
                       return Card(
-                        color: const Color.fromARGB(255, 194, 105, 134),
+                        color: const Color.fromARGB(255, 249, 38, 108),
                         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         elevation: 4,
                         child: ListTile(
@@ -200,7 +191,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                                 onPressed: () => navigateToAddEditScreen(complaint: data),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.white70),
+                                icon: const Icon(Icons.delete, color: Colors.white),
                                 onPressed: () => deleteComplaint(data),
                               ),
                             ],

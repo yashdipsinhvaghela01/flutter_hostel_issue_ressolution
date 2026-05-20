@@ -12,7 +12,6 @@ class _SplashState extends State<Splash> {
   @override
   void initState() {
     super.initState();
-    // Auto-navigate to FragmentHolder after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
@@ -53,7 +52,7 @@ class _SplashState extends State<Splash> {
           ),
           const SizedBox(height: 200),
           const Icon(Icons.house, size: 51),
-          const Text(" Welcome ", style: TextStyle(fontSize: 30)),
+          const Text(" BVM Boys Hostel ", style: TextStyle(fontSize: 30)),
           const SizedBox(height: 150),
           const CircularProgressIndicator(),
           const SizedBox(height: 40),
