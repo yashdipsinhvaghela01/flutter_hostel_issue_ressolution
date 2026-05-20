@@ -36,6 +36,7 @@ class FragmentHolder extends StatelessWidget {
     ];
 
     return MaterialApp(
+    debugShowCheckedModeBanner: false,
       initialRoute: '/',
 
       onGenerateRoute: (settings) {
@@ -120,16 +121,23 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 20),
 
             ElevatedButton(
-              onPressed: () {
-
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
-
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const AddEditComplaintScreen(),
+                    builder: (context) => const AddEditComplaintScreen(),
                   ),
                 );
+                if (result != null) {
+                  complaintList.add(
+                    Complaint(
+                      title: result['title'],
+                      description: result['description'],
+                      status: result['status'],
+                    ),
+                  );
+                }
+                
               },
 
               child: const Text("Add/Edit complaint"),
