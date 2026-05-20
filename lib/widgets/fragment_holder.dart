@@ -8,53 +8,47 @@ class FragmentHolder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Complaint> complaintList = [
-       Complaint(
-      title: "Light not working",
-      description: "Tube light in room 101 is not working properly",
-      status: "Pending",
-    ),
-    Complaint(
-      title: "Water leakage",
-      description: "Bathroom tap in room 203 is leaking",
-      status: "In Progress",
-    ),
-    Complaint(
-      title: "Broken window",
-      description: "Window glass in room 305 is cracked",
-      status: "Pending",
-    ),
-    Complaint(
-      title: "No hot water",
-      description: "Geyser in block B is not heating water",
-      status: "Solved",
-    ),
-    Complaint(
-      title: "Noisy fan",
-      description: "Ceiling fan in room 112 makes loud noise",
-      status: "In Progress",
-    ),
+      Complaint(
+        title: "Light not working",
+        description: "Tube light in room 101 is not working properly",
+        status: "Pending",
+      ),
+      Complaint(
+        title: "Water leakage",
+        description: "Bathroom tap in room 203 is leaking",
+        status: "In Progress",
+      ),
+      Complaint(
+        title: "Broken window",
+        description: "Window glass in room 305 is cracked",
+        status: "Pending",
+      ),
+      Complaint(
+        title: "No hot water",
+        description: "Geyser in block B is not heating water",
+        status: "Solved",
+      ),
+      Complaint(
+        title: "Noisy fan",
+        description: "Ceiling fan in room 112 makes loud noise",
+        status: "In Progress",
+      ),
     ];
 
     return MaterialApp(
-    debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false,
       initialRoute: '/',
 
       onGenerateRoute: (settings) {
-
         switch (settings.name) {
-
           case '/':
             return MaterialPageRoute(
-              builder: (context) => HomePage(
-                complaintList: complaintList,
-              ),
+              builder: (context) => HomePage(complaintList: complaintList),
             );
 
           case '/listing':
             return MaterialPageRoute(
-              builder: (context) => HostelApp(
-                complaintList: complaintList,
-              ),
+              builder: (context) => HostelApp(complaintList: complaintList),
             );
 
           case '/add_edit':
@@ -64,11 +58,8 @@ class FragmentHolder extends StatelessWidget {
 
           default:
             return MaterialPageRoute(
-              builder: (context) => const Scaffold(
-                body: Center(
-                  child: Text("Route Not Found"),
-                ),
-              ),
+              builder: (context) =>
+                  const Scaffold(body: Center(child: Text("Route Not Found"))),
             );
         }
       },
@@ -77,17 +68,12 @@ class FragmentHolder extends StatelessWidget {
 }
 
 class HomePage extends StatelessWidget {
-
   final List<Complaint> complaintList;
 
-  const HomePage({
-    super.key,
-    required this.complaintList,
-  });
+  const HomePage({super.key, required this.complaintList});
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Home Page"),
@@ -95,22 +81,17 @@ class HomePage extends StatelessWidget {
       ),
 
       body: Center(
-
         child: Column(
-
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
             ElevatedButton(
               onPressed: () {
-
                 Navigator.push(
                   context,
 
                   MaterialPageRoute(
-                    builder: (context) => HostelApp(
-                      complaintList: complaintList,
-                    ),
+                    builder: (context) =>
+                        HostelApp(complaintList: complaintList),
                   ),
                 );
               },
@@ -137,7 +118,6 @@ class HomePage extends StatelessWidget {
                     ),
                   );
                 }
-                
               },
 
               child: const Text("Add/Edit complaint"),
