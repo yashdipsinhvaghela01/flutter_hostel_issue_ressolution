@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hostel_issue_resolution/widgets/add__edit.dart';
 import 'package:flutter_hostel_issue_resolution/widgets/listing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class FragmentHolder extends StatelessWidget {
   const FragmentHolder({super.key});
@@ -38,7 +40,6 @@ class FragmentHolder extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
-
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/':
@@ -67,10 +68,55 @@ class FragmentHolder extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final List<Complaint> complaintList;
 
   const HomePage({super.key, required this.complaintList});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    loadComplaintsFromPrefs();
+  }
+
+  Future<void> saveComplaintsToPrefs() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String jsonString = jsonEncode(
+      widget.complaintList.map((c) => c.toJson()).toList(),
+    );
+
+    await prefs.setString('complaints', jsonString);
+  }
+
+  Future<void> loadComplaintsFromPrefs() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String? jsonString = prefs.getString('complaints');
+
+    if (jsonString != null) {
+      List decodedList = jsonDecode(jsonString);
+
+      setState(() {
+        widget.complaintList.clear();
+
+        widget.complaintList.addAll(
+          decodedList.map(
+            (item) => Complaint(
+              title: item['title'],
+              description: item['description'],
+              status: item['status'],
+            ),
+          ),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,47 +125,37 @@ class HomePage extends StatelessWidget {
         title: const Text("Home Page"),
         backgroundColor: Colors.blue,
       ),
-
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        HostelApp(complaintList: complaintList),
-                  ),
-                );
+                Navigator.pushNamed(context, '/listing');
               },
-
-              child: const Text("commplain List"),
+              child: const Text("Complaint List"),
             ),
 
             const SizedBox(height: 20),
 
             ElevatedButton(
               onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddEditComplaintScreen(),
-                  ),
-                );
-                if (result != null) {
-                  complaintList.add(
-                    Complaint(
-                      title: result['title'],
-                      description: result['description'],
-                      status: result['status'],
-                    ),
-                  );
+                final result = await Navigator.pushNamed(context, '/add_edit');
+
+                if (result != null && result is Map) {
+                  setState(() {
+                    widget.complaintList.add(
+                      Complaint(
+                        title: result['title'],
+                        description: result['description'],
+                        status: result['status'],
+                      ),
+                    );
+                  });
+
+                  await saveComplaintsToPrefs();
                 }
               },
-
               child: const Text("Add/Edit complaint"),
             ),
           ],
