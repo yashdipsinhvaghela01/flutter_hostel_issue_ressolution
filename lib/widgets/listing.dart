@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-// Make sure this path exactly matches your file structure!
-import 'package:flutter_hostel_issue_resolution/widgets/add__edit.dart';  
+import 'package:flutter_hostel_issue_resolution/widgets/add__edit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HostelApp extends StatelessWidget {
   const HostelApp({super.key, required this.complaintList});
+
   final List<Complaint> complaintList;
 
   @override
@@ -22,10 +24,23 @@ class Complaint {
     required this.description,
     required this.status,
   });
+
+  Map<String, dynamic> toJson() {
+    return {'title': title, 'description': description, 'status': status};
+  }
+
+  factory Complaint.fromJson(Map<String, dynamic> json) {
+    return Complaint(
+      title: json['title'],
+      description: json['description'],
+      status: json['status'],
+    );
+  }
 }
 
 class ComplaintScreen extends StatefulWidget {
   final List<Complaint> complaintList;
+
   const ComplaintScreen({super.key, required this.complaintList});
 
   @override
@@ -35,31 +50,41 @@ class ComplaintScreen extends StatefulWidget {
 class _ComplaintScreenState extends State<ComplaintScreen> {
   String currentFilter = "All";
 
-  void deleteComplaint(Complaint complaint) {
+  Future<void> saveComplaintsToPrefs() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String jsonString = jsonEncode(
+      widget.complaintList.map((c) => c.toJson()).toList(),
+    );
+
+    await prefs.setString('complaints', jsonString);
+  }
+
+  void deleteComplaint(Complaint complaint) async {
     setState(() {
       widget.complaintList.remove(complaint);
     });
+
+    await saveComplaintsToPrefs();
   }
 
   Color getStatusColor(String status) {
     final normalized = status.trim().toLowerCase();
+
     if (normalized == "pending") {
       return Colors.orange;
     } else if (normalized == "in progress") {
       return Colors.blue;
     } else {
-      return Colors.green; 
+      return Colors.green;
     }
   }
 
   void navigateToAddEditScreen({Complaint? complaint}) async {
-    final result = await Navigator.push(
+    final result = await Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => AddEditComplaintScreen(
-          complaint: complaint,
-        ),
-      ),
+      '/add_edit',
+      arguments: complaint,
     );
 
     if (result != null && result is Map) {
@@ -74,10 +99,13 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
           );
         } else {
           complaint.title = result["title"] ?? complaint.title;
-          complaint.description = result["description"] ?? complaint.description;
+          complaint.description =
+              result["description"] ?? complaint.description;
           complaint.status = result["status"] ?? complaint.status;
         }
       });
+
+      await saveComplaintsToPrefs();
     }
   }
 
@@ -85,7 +113,9 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
   Widget build(BuildContext context) {
     final filteredList = widget.complaintList.where((complaint) {
       if (currentFilter == "All") return true;
-      return complaint.status.trim().toLowerCase() == currentFilter.trim().toLowerCase();
+
+      return complaint.status.trim().toLowerCase() ==
+          currentFilter.trim().toLowerCase();
     }).toList();
 
     return Scaffold(
@@ -93,31 +123,47 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
         title: const Text("Hostel Complaints"),
         backgroundColor: Colors.blue,
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () => navigateToAddEditScreen(),
         child: const Icon(Icons.add),
       ),
+
       body: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
             color: Colors.white24,
+
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+
               child: Row(
-                children: ["All", "Pending", "In Progress", "Solved"].map((filterOpt) {
+                children: ["All", "Pending", "In Progress", "Solved"].map((
+                  filterOpt,
+                ) {
                   final isSelected = currentFilter == filterOpt;
+
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 5.0),
+
                     child: ChoiceChip(
                       label: Text(filterOpt),
+
                       selected: isSelected,
+
                       selectedColor: Colors.blue.withOpacity(0.25),
+
                       checkmarkColor: const Color.fromARGB(255, 243, 33, 33),
+
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.blue[800] : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
+
                       onSelected: (bool selected) {
                         setState(() {
                           currentFilter = filterOpt;
@@ -129,7 +175,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
               ),
             ),
           ),
-          
+
           Expanded(
             child: filteredList.isEmpty
                 ? const Center(
@@ -140,40 +186,62 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                   )
                 : ListView.builder(
                     itemCount: filteredList.length,
+
                     itemBuilder: (context, index) {
                       final data = filteredList[index];
 
                       return Card(
                         color: const Color.fromARGB(255, 249, 38, 108),
-                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+
                         elevation: 4,
+
                         child: ListTile(
                           isThreeLine: true,
+
                           title: Text(
                             data.title,
+
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
+
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+
                             children: [
                               const SizedBox(height: 4),
+
                               Text(
                                 data.description,
+
                                 style: const TextStyle(color: Colors.white70),
                               ),
+
                               const SizedBox(height: 8),
+
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+
                                 decoration: BoxDecoration(
                                   color: getStatusColor(data.status),
+
                                   borderRadius: BorderRadius.circular(12),
                                 ),
+
                                 child: Text(
                                   data.status,
+
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -183,15 +251,27 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                               ),
                             ],
                           ),
+
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
+
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.white),
-                                onPressed: () => navigateToAddEditScreen(complaint: data),
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                ),
+
+                                onPressed: () =>
+                                    navigateToAddEditScreen(complaint: data),
                               ),
+
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.white),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                ),
+
                                 onPressed: () => deleteComplaint(data),
                               ),
                             ],
